@@ -1,11 +1,14 @@
 # script for the analysis of the output of the swarm model, Standard scenario.
-# 
+# computes the mean and the standard error of the replicates of the same scenario.
+# plots mean and se of Polarization, Food patches, Fish on food and School extent for a given number of fish.
+# Also plots mean and se of the fish on food (as fish on food/food patches) for all the numbers of fish.
+# input .csv files need to be in the pointed working directory or in its subdirectories.
 
 library(plyr)
 library(reshape)
 library(ggplot2)
-setwd("C:/Users/Alberto/Documents/swarm_runs/F2_Std_i") 
-listOfFiles <- list.files("C:/Users/Alberto/Documents/swarm_runs/F2_Std_i", 
+setwd("C:/Users/Alberto/Documents/swarm_runs/F2_Std_s") 
+listOfFiles <- list.files("C:/Users/Alberto/Documents/swarm_runs/F2_Std_s", 
                           pattern="*.csv", recursive=TRUE) # write list with all the filenames of the output
 
 nOfCells<- as.numeric(gsub("[^0-9]", "", listOfFiles)) # vector with the number of cells extracted as numeric from the filenames
@@ -25,6 +28,18 @@ dataReducer <- function(data) {
 }
 
 shortData <- lapply(allData, dataReducer) # reduces dataframes
+
+# code region to exclude the school expanse outliers from the dataframe. school expanse upper limit
+# corresponds to numFish + 40. 
+
+subsetter <- function(frame) {
+        frame1 <- split(frame, frame[1])
+        frame2 <- lapply(frame1, function(data) subset(data, data[5]<=data[1,1]+40))
+        frame3 <- do.call(rbind, frame2)
+        #return(frame3)
+}
+
+shortData <- lapply(shortData, subsetter) # overwrite shortData with the version with no outliers
 
 # averages the variables factorizing per number of fish, calculates the standard error and returns a data frame
 mainRoutine <- function(data) { 
@@ -83,8 +98,8 @@ limitsd<-aes(ymax=fishOnFoodAll$f50+fishOnFoodAll$se50, ymin=fishOnFoodAll$f50-f
 limitse<-aes(ymax=fishOnFoodAll$f60+fishOnFoodAll$se60, ymin=fishOnFoodAll$f60-fishOnFoodAll$se60)
 pd <- position_dodge(0.5) # set the dodge span for the errorbars in ggplot
 
-# plotter
-plotFishOnFoodInd <-ggplot(subset(meltFishOnFoodAll, variable=="f20" | variable=="f30" |
+
+plotFishOnFoodSwarm <-ggplot(subset(meltFishOnFoodAll, variable=="f20" | variable=="f30" |
                                           variable== "f40" | variable== "f50" | variable== "f60"),
                            aes(x=Grid, y=value, fill=variable))+
         geom_line(aes(linetype=variable), size=0.2)+
@@ -109,9 +124,8 @@ plotFishOnFoodInd <-ggplot(subset(meltFishOnFoodAll, variable=="f20" | variable=
         theme(axis.text.x=element_text(size=10))+
         theme(axis.text.y=element_text(size=10))
 
-plotFishOnFoodInd # aesthetics missing
+plotFishOnFoodSwarm # aesthetics missing
 
-write.table(fishOnFoodAll, "C:/Users/Alberto/Documents/swarm_runs/new_output_Std/fishOnFoodIndividual.csv") # writes .csv output 
-ggsave("Second plot individual.pdf", plotFishOnFoodInd, useDingbats=FALSE)
-
+write.table(fishOnFoodAll, "C:/Users/Alberto/Documents/swarm_runs/new_output_Std/fishOnFoodSchool.csv") # writes .csv output 
+ggsave("Second plot swarm.pdf", plotFishOnFoodSwarm, useDingbats=FALSE)
 
