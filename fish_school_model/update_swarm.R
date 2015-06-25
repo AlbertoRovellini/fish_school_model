@@ -22,7 +22,7 @@ dataReducer <- function(data) {
         data[,8] <- as.numeric(gsub(",","", data[,8])) # drop the comma as thousand separator
         data[,2] <- as.numeric(gsub(",","", data[,2])) # drop the comma as thousand separator
         data[,2] <- as.numeric(data[,2]) # turn to numeric class the Grid column
-        data <- data[c(2,6,7)] # extract the desired columns
+        data <- data[c(2,6,7,8)] # extract the desired columns
 }
 
 allData_first <- lapply(allData_first, dataReducer) # reduces dataframes
@@ -56,16 +56,25 @@ subset.custom <- function(data) { # function to keep only the meaningful numbers
 
 completeData <- lapply(completeData, subset.custom) 
 
+# code region to exclude the school expanse outliers from the dataframe. school expanse upper limit
+# corresponds to numFish(30) + 40 = 70. 
+
+subsetter <- function(data) { 
+        data1 <- subset(data, data[,4]<=70) # careful with scoping rules, rename variables
+        data1 <- data1[,c(1,2,3)] # drops the expanse column once it's not necessary anymore
+}
+completeDataSub <- lapply(completeData, subsetter) 
+
 # routine
-mainRoutine <- function(data) { 
+mainRoutine <- function(X) { 
         stdError <- function(x) sqrt(var(x)/length(x)) # function defining standard error
-        stdErrorColumn<-function(data) apply(data[,2:ncol(data)], 2, stdError) # function to apply stdError to columns
-        meanPerCellGridSize <- ddply(data, .(CellGridSize), colMeans) # apply mean factorized by numFish
-        stdErrorPerCellGridSize <- ddply(data, .(CellGridSize), stdErrorColumn) # apply stdErrorColumn factorized by numFish
+        stdErrorColumn<-function(X) apply(X[,2:ncol(X)], 2, stdError) # function to apply stdError to columns
+        meanPerCellGridSize <- ddply(X, .(CellGridSize), colMeans) # apply mean factorized by cell grid size
+        stdErrorPerCellGridSize <- ddply(X, .(CellGridSize), stdErrorColumn) # apply stdErrorColumn factorized by numFish
         meanAndStdError <- merge(meanPerCellGridSize, stdErrorPerCellGridSize, by="CellGridSize")
 }
 
-allDataFrames <- lapply(completeData, mainRoutine) # applies the routine to all the dataframes
+allDataFrames <- lapply(completeDataSub, mainRoutine) # applies the routine to all the dataframes
 
 CAList <- list()
 for (i in 1:length(CAOrdered_first)) { # create a list of vectors, each a replicate of an updating time
@@ -139,6 +148,6 @@ plotFishOnFoodPerUpdateTime <-ggplot(subset(meltFishOnFoodPerUpdateTime, variabl
 
 plotFishOnFoodPerUpdateTime # render the plot, can be commented out as routine
 
-#write.table(fishOnFoodPerUpdateTime, "update_swarm.csv")
+#write.table(fishOnFoodPerUpdateTime, "C:/Users/Alberto/Documents/swarm_runs/new_output_CA/update_swarm.csv")
 
 #ggsave("update_swarm.pdf", plotFishOnFoodPerUpdateTime, useDingbats=FALSE)

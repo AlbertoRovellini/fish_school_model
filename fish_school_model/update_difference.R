@@ -56,7 +56,7 @@ plotmeltDifferenceAll <-ggplot(subset(meltDifference, variable=="t2" | variable=
 
 plotmeltDifferenceAll # aesthetics missing
 
-#ggsave("Difference.pdf", plotmeltDifferenceAll, useDingbats=FALSE)
+ggsave("Difference.pdf", plotmeltDifferenceAll, useDingbats=FALSE)
 
 
 #pdf("plots.pdf", width=5, height=10, useDingbats=FALSE)
