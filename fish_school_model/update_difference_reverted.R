@@ -1,8 +1,8 @@
 library(reshape)
 library(ggplot2)
 library(gridExtra)
-setwd("C:/Users/Alberto/Documents/swarm_runs/new_output_CA/basic")
-listOfFiles <- list.files("C:/Users/Alberto/Documents/swarm_runs/new_output_CA/basic", 
+setwd("C:/Users/Alberto/Documents/swarm_runs/new_output_CA/reverted")
+listOfFiles <- list.files("C:/Users/Alberto/Documents/swarm_runs/new_output_CA/reverted", 
                           pattern="*.csv", recursive=TRUE) # write list with all the filenames of the output
 read.special<-function(x) { # file reader
         read.csv(x, header=T, sep=' ', dec='.') 
@@ -12,9 +12,10 @@ allData <- lapply(listOfFiles, read.special) # reads all the output files
 differenceSchoolInd <- as.data.frame(allData[[2]][,c(2:7)]-allData[[1]][,c(2:7)])
 differenceStdError <- as.data.frame(sqrt((allData[[2]][,c(8:13)])^2+(allData[[1]][,c(8:13)])^2))
 differenceFrame <- data.frame(allData[[1]][,1], differenceSchoolInd, differenceStdError)
-differenceFrame <- rename(differenceFrame, c(allData..1.....1.="Grid"))
-meltDifference <- melt(differenceFrame, id.vars="Grid")
+differenceFrame <- rename(differenceFrame, c(allData..1.....1.="Cellsize"))
+meltDifference <- melt(differenceFrame, id.vars="Cellsize")
 cellsOrdered <- c(40,80,160,320,640,1280) # vector with the meaningful grid sizes
+cellSize <- c(500,250,125,62.500,31.250,15.625) # vector with the dimensions of the cells
 
 
 # mapping of the limits for the errorbar plot, each mean +- its se. one entry per class is necessary
@@ -30,14 +31,14 @@ pd <- position_dodge(0.5) # set the dodge span for the errorbars in ggplot
 plotmeltDifferenceAll <-ggplot(subset(meltDifference, variable=="t2" | variable=="t4" |
                                                variable== "t8" | variable== "t16" | variable== "t32" | 
                                                variable== "t64"),
-                               aes(x=Grid, y=value, fill=variable))+
+                               aes(x=Cellsize, y=value, fill=variable))+
         geom_line(aes(linetype=variable), size=0.2)+
         scale_linetype_manual(values=c("solid", "dashed", "dotted", "dotdash", "longdash", "twodash"))+
         geom_point(aes(shape=variable, fill=variable), size=3)+
         #coord_trans(x="log2")+
         scale_shape_manual(values=c(25,22,23,24,21,7))+
         scale_fill_manual(values=rep("darkgrey",6))+
-        scale_x_log10("Grid cells", breaks=cellsOrdered)+
+        scale_x_log10("Cell size", breaks=cellSize)+
         scale_y_continuous("Fish on food", breaks=seq(-0.4,1.4, by=0.2), 
                            limits=c(-0.4,1.4), expand=c(0,0))+
         geom_errorbar(limitsa, data=subset(meltDifference, variable=="t2"), width=0.02, position='dodge')+
@@ -56,7 +57,7 @@ plotmeltDifferenceAll <-ggplot(subset(meltDifference, variable=="t2" | variable=
 
 plotmeltDifferenceAll # aesthetics missing
 
-ggsave("Difference.pdf", plotmeltDifferenceAll, useDingbats=FALSE)
+ggsave("Difference_reverted.pdf", plotmeltDifferenceAll, useDingbats=FALSE)
 
 
 #pdf("plots.pdf", width=5, height=10, useDingbats=FALSE)

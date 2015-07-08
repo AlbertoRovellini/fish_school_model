@@ -67,6 +67,8 @@ cells40 <- allTimeCululativeProb[1:100]
 cells80 <- allTimeCululativeProb[101:200]
 cells160 <- allTimeCululativeProb[201:300]
 cells320 <- allTimeCululativeProb[301:400]
+cells640 <- allTimeCululativeProb[401:500]
+cells1280 <- allTimeCululativeProb[501:600]
 
 # standard error function definition
 stdError <- function(x) sqrt(var(x)/length(x)) # function defining standard error
@@ -84,9 +86,16 @@ se160 <- apply(sapply(cells160, function(X) X$cumulative), 1, stdError)
 mean320 <- rowMeans(sapply(cells320, function(X) X$cumulative))
 se320 <- apply(sapply(cells320, function(X) X$cumulative), 1, stdError)
 
+mean640 <- rowMeans(sapply(cells640, function(X) X$cumulative))
+se640 <- apply(sapply(cells640, function(X) X$cumulative), 1, stdError)
+
+mean1280 <- rowMeans(sapply(cells1280, function(X) X$cumulative))
+se1280 <- apply(sapply(cells1280, function(X) X$cumulative), 1, stdError)
+
 Timesteps <- c(3125,6250,12500,25000,50000,100000,200000) # artefact, for the plot
 
-probMeanAndStdErr <- data.frame(Timesteps, mean40, mean80, mean160, mean320, se40, se80, se160, se320)
+probMeanAndStdErr <- data.frame(Timesteps, mean40, mean80, mean160, mean320, mean640, mean1280, 
+                                se40, se80, se160, se320, se640, se1280)
 meltprobMeanAndStdErr <- melt(probMeanAndStdErr, id.vars="Timesteps")
 
 # definition of the limits of the error bars in the plot
@@ -94,17 +103,20 @@ limits1 <- aes(ymax=probMeanAndStdErr$mean40+probMeanAndStdErr$se40, ymin=probMe
 limits2 <- aes(ymax=probMeanAndStdErr$mean80+probMeanAndStdErr$se80, ymin=probMeanAndStdErr$mean80-probMeanAndStdErr$se80)
 limits3 <- aes(ymax=probMeanAndStdErr$mean160+probMeanAndStdErr$se160, ymin=probMeanAndStdErr$mean160-probMeanAndStdErr$se160)
 limits4 <- aes(ymax=probMeanAndStdErr$mean320+probMeanAndStdErr$se320, ymin=probMeanAndStdErr$mean320-probMeanAndStdErr$se320)
+limits5 <- aes(ymax=probMeanAndStdErr$mean640+probMeanAndStdErr$se640, ymin=probMeanAndStdErr$mean640-probMeanAndStdErr$se640)
+limits6 <- aes(ymax=probMeanAndStdErr$mean1280+probMeanAndStdErr$se1280, ymin=probMeanAndStdErr$mean1280-probMeanAndStdErr$se1280)
 
 
 plotprobMeanAndStdErr <-ggplot(subset(meltprobMeanAndStdErr, variable=="mean40" | variable=="mean80" |
-                                            variable== "mean160" | variable== "mean320"),
+                                            variable== "mean160" | variable== "mean320"| variable== "mean640" | 
+                                              variable== "mean1280"),
                              aes(x=Timesteps, y=value, fill=variable))+
         geom_line(aes(linetype=variable), size=0.2)+
-        scale_linetype_manual(values=c("solid", "dashed", "dotted", "dotdash"))+
+        scale_linetype_manual(values=c("solid", "dashed", "dotted", "dotdash", "longdash", "twodash"))+
         geom_point(aes(shape=variable, fill=variable), size=3)+
         #coord_trans(x="log2")+
-        scale_shape_manual(values=c(25,22,23,24))+
-        scale_fill_manual(values=rep("darkgrey",4))+
+        scale_shape_manual(values=c(25,22,23,24,21,7))+
+        scale_fill_manual(values=rep("darkgrey",6))+
         scale_x_log10("Time steps", breaks=Timesteps, labels=c(0,Timesteps[2:length(Timesteps)]))+
         scale_y_continuous("Schooling probability > 50%", breaks=seq(0,100, by=10), 
                            limits=c(0,100), expand=c(0,0))+
@@ -112,6 +124,8 @@ plotprobMeanAndStdErr <-ggplot(subset(meltprobMeanAndStdErr, variable=="mean40" 
         geom_errorbar(limits2, data=subset(meltprobMeanAndStdErr, variable=="mean80"), width=0.02, position='dodge')+
         geom_errorbar(limits3, data=subset(meltprobMeanAndStdErr, variable=="mean160"), width=0.02, position='dodge')+
         geom_errorbar(limits4, data=subset(meltprobMeanAndStdErr, variable=="mean320"), width=0.02, position='dodge')+
+        geom_errorbar(limits5, data=subset(meltprobMeanAndStdErr, variable=="mean640"), width=0.02, position='dodge')+
+        geom_errorbar(limits6, data=subset(meltprobMeanAndStdErr, variable=="mean1280"), width=0.02, position='dodge')+
         theme_bw()+
         theme(panel.grid.major.x = element_blank())+
         theme(axis.title.x = element_text(size=12,vjust=-0.3),
